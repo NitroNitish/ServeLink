@@ -7,6 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, LogOut, BarChart3, UtensilsCrossed, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import { MenuManagement } from "@/components/MenuManagement";
+import { TableManagement } from "@/components/TableManagement";
+import { OrdersManagement } from "@/components/OrdersManagement";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -79,116 +83,19 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="shadow-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders Today</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Start taking orders to see stats</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Menu Items</CardTitle>
-                  <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Add items to your menu</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Tables</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Set up your tables</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="grid md:grid-cols-2 gap-4">
-                <Button className="w-full justify-start h-auto py-4 px-6" variant="outline">
-                  <div className="text-left">
-                    <div className="font-semibold">Add Menu Items</div>
-                    <div className="text-sm text-muted-foreground">Create your digital menu</div>
-                  </div>
-                </Button>
-                <Button className="w-full justify-start h-auto py-4 px-6" variant="outline">
-                  <div className="text-left">
-                    <div className="font-semibold">Setup Tables</div>
-                    <div className="text-sm text-muted-foreground">Generate QR codes for tables</div>
-                  </div>
-                </Button>
-                <Button className="w-full justify-start h-auto py-4 px-6" variant="outline">
-                  <div className="text-left">
-                    <div className="font-semibold">View Orders</div>
-                    <div className="text-sm text-muted-foreground">Monitor incoming orders</div>
-                  </div>
-                </Button>
-                <Button className="w-full justify-start h-auto py-4 px-6" variant="outline">
-                  <div className="text-left">
-                    <div className="font-semibold">Kitchen Display</div>
-                    <div className="text-sm text-muted-foreground">Real-time order tracking</div>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
+            <AnalyticsDashboard />
           </TabsContent>
 
           <TabsContent value="menu">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Menu Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <UtensilsCrossed className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">No menu items yet</p>
-                  <Button>Add Your First Item</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <MenuManagement />
           </TabsContent>
 
           <TabsContent value="orders">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No orders yet</p>
-                </div>
-              </CardContent>
-            </Card>
+            <OrdersManagement />
           </TabsContent>
 
           <TabsContent value="tables">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Table Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">No tables configured</p>
-                  <Button>Add Tables</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TableManagement />
           </TabsContent>
         </Tabs>
       </main>

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Leaf, ChefHat } from "lucide-react";
+import { ShoppingCart, Leaf, ChefHat, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MenuItem {
   id: string;
@@ -25,9 +28,14 @@ interface Category {
 }
 
 const Menu = () => {
+  const [searchParams] = useSearchParams();
+  const tableNumber = searchParams.get("table") || "1";
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,12 +63,74 @@ const Menu = () => {
     toast({ title: "Added to cart", description: "Item added successfully" });
   };
 
+  const removeFromCart = (itemId: string) => {
+    setCart((prev) => {
+      const newCart = { ...prev };
+      if (newCart[itemId] > 1) {
+        newCart[itemId]--;
+      } else {
+        delete newCart[itemId];
+      }
+      return newCart;
+    });
+  };
+
   const cartTotal = Object.entries(cart).reduce((total, [itemId, quantity]) => {
     const item = menuItems.find((i) => i.id === itemId);
     return total + (item?.price || 0) * quantity;
   }, 0);
 
   const cartItemsCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+
+  const placeOrder = async () => {
+    if (cartItemsCount === 0) return;
+
+    setLoading(true);
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          table_number: tableNumber,
+          status: "pending",
+          total_amount: cartTotal,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      const orderItems = Object.entries(cart).map(([itemId, quantity]) => {
+        const item = menuItems.find((i) => i.id === itemId);
+        return {
+          order_id: orderData.id,
+          menu_item_id: itemId,
+          quantity,
+          unit_price: item?.price || 0,
+          special_instructions: specialInstructions || null,
+        };
+      });
+
+      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Your order for table ${tableNumber} has been sent to the kitchen.`,
+      });
+      setCart({});
+      setSpecialInstructions("");
+      setCartOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warm-50 to-background">
@@ -75,15 +145,99 @@ const Menu = () => {
               Menu
             </span>
           </div>
-          <Button className="relative">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Cart
-            {cartItemsCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 rounded-full">
-                {cartItemsCount}
-              </Badge>
-            )}
-          </Button>
+          <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+            <SheetTrigger asChild>
+              <Button className="relative">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Cart
+                {cartItemsCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 rounded-full">
+                    {cartItemsCount}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Your Order</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-4">
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-sm font-medium">Table Number</p>
+                  <p className="text-2xl font-bold text-primary">{tableNumber}</p>
+                </div>
+
+                {cartItemsCount === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">Your cart is empty</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {Object.entries(cart).map(([itemId, quantity]) => {
+                        const item = menuItems.find((i) => i.id === itemId);
+                        if (!item) return null;
+                        return (
+                          <div key={itemId} className="flex items-center justify-between border-b pb-2">
+                            <div className="flex-1">
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                ₹{item.price} × {quantity}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeFromCart(itemId)}
+                              >
+                                -
+                              </Button>
+                              <span className="w-8 text-center">{quantity}</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => addToCart(itemId)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Special Instructions</label>
+                      <Textarea
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        placeholder="Any special requests..."
+                        className="mt-2"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between text-lg font-bold mb-4">
+                        <span>Total</span>
+                        <span className="text-primary">₹{cartTotal.toFixed(2)}</span>
+                      </div>
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        onClick={placeOrder}
+                        disabled={loading}
+                      >
+                        {loading ? "Placing Order..." : "Place Order"}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
@@ -193,7 +347,7 @@ const Menu = () => {
         )}
       </main>
 
-      {/* Cart Summary */}
+      {/* Cart Summary Bar */}
       {cartItemsCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-sm p-4 shadow-elegant">
           <div className="container mx-auto flex items-center justify-between">
@@ -201,7 +355,9 @@ const Menu = () => {
               <p className="text-sm text-muted-foreground">{cartItemsCount} items</p>
               <p className="text-2xl font-bold text-primary">₹{cartTotal.toFixed(2)}</p>
             </div>
-            <Button size="lg">Place Order</Button>
+            <Button size="lg" onClick={() => setCartOpen(true)}>
+              View Cart
+            </Button>
           </div>
         </div>
       )}
