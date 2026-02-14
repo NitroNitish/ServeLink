@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Package, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Database } from "@/integrations/supabase/types";
-
-type OrderStatus = Database["public"]["Enums"]["order_status"];
+type OrderStatus = "pending" | "preparing" | "ready" | "completed" | "cancelled";
 
 interface Order {
   id: string;

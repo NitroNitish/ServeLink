@@ -14,10 +14,11 @@ interface MenuItemDialogProps {
   onOpenChange: (open: boolean) => void;
   item?: any;
   categories: any[];
+  restaurantId: string;
   onSuccess: () => void;
 }
 
-export const MenuItemDialog = ({ open, onOpenChange, item, categories, onSuccess }: MenuItemDialogProps) => {
+export const MenuItemDialog = ({ open, onOpenChange, item, categories, restaurantId, onSuccess }: MenuItemDialogProps) => {
   const [formData, setFormData] = useState({
     name: item?.name || "",
     description: item?.description || "",
@@ -39,7 +40,9 @@ export const MenuItemDialog = ({ open, onOpenChange, item, categories, onSuccess
       ...formData,
       price: parseFloat(formData.price),
       preparation_time: parseInt(formData.preparation_time.toString()),
-      restaurant_id: (await supabase.auth.getUser()).data.user?.id,
+      category_id: formData.category_id || null,
+      image_url: formData.image_url || null,
+      restaurant_id: restaurantId,
     };
 
     const { error } = item
@@ -66,102 +69,50 @@ export const MenuItemDialog = ({ open, onOpenChange, item, categories, onSuccess
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Item Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+            <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
           </div>
-
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-            />
+            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="price">Price (₹)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                required
-              />
+              <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} required />
             </div>
-
             <div>
               <Label htmlFor="prep_time">Prep Time (mins)</Label>
-              <Input
-                id="prep_time"
-                type="number"
-                value={formData.preparation_time}
-                onChange={(e) => setFormData({ ...formData, preparation_time: parseInt(e.target.value) })}
-                required
-              />
+              <Input id="prep_time" type="number" value={formData.preparation_time} onChange={(e) => setFormData({ ...formData, preparation_time: parseInt(e.target.value) })} required />
             </div>
           </div>
-
           <div>
             <Label htmlFor="category">Category</Label>
             <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
+                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
           <div>
             <Label htmlFor="image">Image URL (optional)</Label>
-            <Input
-              id="image"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-            />
+            <Input id="image" value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="https://example.com/image.jpg" />
           </div>
-
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Switch
-                id="veg"
-                checked={formData.is_veg}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_veg: checked })}
-              />
+              <Switch id="veg" checked={formData.is_veg} onCheckedChange={(checked) => setFormData({ ...formData, is_veg: checked })} />
               <Label htmlFor="veg">Vegetarian</Label>
             </div>
-
             <div className="flex items-center gap-2">
-              <Switch
-                id="available"
-                checked={formData.is_available}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
-              />
+              <Switch id="available" checked={formData.is_available} onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })} />
               <Label htmlFor="available">Available</Label>
             </div>
           </div>
-
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : item ? "Update" : "Add Item"}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={loading}>{loading ? "Saving..." : item ? "Update" : "Add Item"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

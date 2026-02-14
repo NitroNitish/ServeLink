@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChefHat, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import type { Database } from "@/integrations/supabase/types";
-
-type OrderStatus = Database["public"]["Enums"]["order_status"];
+type OrderStatus = "pending" | "preparing" | "ready" | "completed" | "cancelled";
 
 interface Order {
   id: string;

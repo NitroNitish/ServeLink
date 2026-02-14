@@ -8,7 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { MenuItemDialog } from "./MenuItemDialog";
 import { CategoryDialog } from "./CategoryDialog";
 
-export const MenuManagement = () => {
+interface MenuManagementProps {
+  restaurantId: string;
+}
+
+export const MenuManagement = ({ restaurantId }: MenuManagementProps) => {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -22,8 +26,8 @@ export const MenuManagement = () => {
   }, []);
 
   const fetchData = async () => {
-    const { data: cats } = await supabase.from("menu_categories").select("*").order("display_order");
-    const { data: items } = await supabase.from("menu_items").select("*").order("name");
+    const { data: cats } = await supabase.from("menu_categories").select("*").eq("restaurant_id", restaurantId).order("display_order");
+    const { data: items } = await supabase.from("menu_items").select("*").eq("restaurant_id", restaurantId).order("name");
     if (cats) setCategories(cats);
     if (items) setMenuItems(items);
   };
@@ -71,11 +75,7 @@ export const MenuManagement = () => {
               {categories.map((cat) => (
                 <div key={cat.id} className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg">
                   <span>{cat.name}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => { setSelectedCategory(cat); setCategoryDialogOpen(true); }}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => { setSelectedCategory(cat); setCategoryDialogOpen(true); }}>
                     <Edit className="w-3 h-3" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => deleteCategory(cat.id)}>
@@ -109,14 +109,8 @@ export const MenuManagement = () => {
                   <Badge variant="outline">{item.is_veg ? "Veg" : "Non-Veg"}</Badge>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => { setSelectedItem(item); setItemDialogOpen(true); }}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => { setSelectedItem(item); setItemDialogOpen(true); }}>
+                    <Edit className="w-3 h-3 mr-1" /> Edit
                   </Button>
                   <Button size="sm" variant="destructive" onClick={() => deleteItem(item.id)}>
                     <Trash2 className="w-3 h-3" />
@@ -133,6 +127,7 @@ export const MenuManagement = () => {
         onOpenChange={setItemDialogOpen}
         item={selectedItem}
         categories={categories}
+        restaurantId={restaurantId}
         onSuccess={fetchData}
       />
 
@@ -140,6 +135,7 @@ export const MenuManagement = () => {
         open={categoryDialogOpen}
         onOpenChange={setCategoryDialogOpen}
         category={selectedCategory}
+        restaurantId={restaurantId}
         onSuccess={fetchData}
       />
     </div>
