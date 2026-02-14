@@ -6,13 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Package, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type OrderStatus = Database["public"]["Enums"]["order_status"];
 
 interface Order {
   id: string;
-  table_number: string;
-  status: string;
+  order_number: string;
+  table_id: string | null;
+  status: OrderStatus;
   total_amount: number;
   created_at: string;
+  table_info?: { table_number: string } | null;
   order_items: Array<{
     quantity: number;
     menu_items: { name: string };
@@ -45,6 +50,7 @@ const Waiter = () => {
       .from("orders")
       .select(`
         *,
+        restaurant_tables (table_number),
         order_items (
           quantity,
           menu_items (name)
@@ -52,10 +58,15 @@ const Waiter = () => {
       `)
       .order("created_at", { ascending: false });
 
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      setOrders(data.map((o: any) => ({
+        ...o,
+        table_info: o.restaurant_tables,
+      })) as Order[]);
+    }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     const { error } = await supabase
       .from("orders")
       .update({ status })
@@ -70,16 +81,16 @@ const Waiter = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "ready":
-        return <Package className="w-4 h-4" />;
-      case "completed":
-        return <CheckCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
+      case "ready": return <Package className="w-4 h-4" />;
+      case "completed": return <CheckCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
     }
   };
 
   const filterOrders = (status: string[]) => orders.filter((o) => status.includes(o.status));
+
+  const getTableLabel = (order: Order) =>
+    order.table_info ? `Table ${order.table_info.table_number}` : `#${order.order_number}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warm-50 to-background p-6">
@@ -107,7 +118,7 @@ const Waiter = () => {
                 <Card key={order.id} className="shadow-card">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Table {order.table_number}</CardTitle>
+                      <CardTitle>{getTableLabel(order)}</CardTitle>
                       <Badge className="bg-green-500">Ready</Badge>
                     </div>
                   </CardHeader>
@@ -137,7 +148,7 @@ const Waiter = () => {
                 <Card key={order.id} className="shadow-card">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Table {order.table_number}</CardTitle>
+                      <CardTitle>{getTableLabel(order)}</CardTitle>
                       <Badge variant="outline">{order.status}</Badge>
                     </div>
                   </CardHeader>
@@ -149,7 +160,7 @@ const Waiter = () => {
                         </p>
                       ))}
                     </div>
-                    <p className="text-muted-foreground text-sm mt-4">
+                    <p className="text-muted-foreground text-sm mt-4 flex items-center gap-1">
                       {getStatusIcon(order.status)} {order.status}
                     </p>
                   </CardContent>
@@ -164,7 +175,7 @@ const Waiter = () => {
                 <Card key={order.id} className="shadow-card">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Table {order.table_number}</CardTitle>
+                      <CardTitle>{getTableLabel(order)}</CardTitle>
                       <Badge className="bg-gray-500">Completed</Badge>
                     </div>
                   </CardHeader>

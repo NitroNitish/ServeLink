@@ -19,9 +19,8 @@ export const AnalyticsDashboard = () => {
   }, []);
 
   const fetchAnalytics = async () => {
-    // Fetch overall stats
     const { data: orders } = await supabase.from("orders").select("total_amount, created_at");
-    const { data: tables } = await supabase.from("tables").select("id");
+    const { data: tables } = await supabase.from("restaurant_tables").select("id");
 
     if (orders) {
       const total = orders.reduce((sum, o) => sum + o.total_amount, 0);
@@ -32,7 +31,6 @@ export const AnalyticsDashboard = () => {
         totalTables: tables?.length || 0,
       });
 
-      // Group by day
       const byDay: Record<string, number> = {};
       orders.forEach((o) => {
         const day = new Date(o.created_at).toLocaleDateString();
@@ -41,7 +39,6 @@ export const AnalyticsDashboard = () => {
       setRevenueByDay(Object.entries(byDay).map(([day, revenue]) => ({ day, revenue })));
     }
 
-    // Fetch top selling items
     const { data: items } = await supabase
       .from("order_items")
       .select("menu_item_id, quantity, menu_items(name)")

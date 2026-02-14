@@ -6,20 +6,25 @@ import { Badge } from "@/components/ui/badge";
 import { ChefHat, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
+
+type OrderStatus = Database["public"]["Enums"]["order_status"];
 
 interface Order {
   id: string;
-  table_number: string;
-  status: string;
+  order_number: string;
+  table_id: string | null;
+  status: OrderStatus;
   total_amount: number;
   created_at: string;
+  table_info?: { table_number: string } | null;
   order_items: Array<{
     id: string;
     quantity: number;
     special_instructions: string | null;
     menu_items: {
       name: string;
-      preparation_time: number;
+      preparation_time: number | null;
     };
   }>;
 }
@@ -50,6 +55,7 @@ const Kitchen = () => {
       .from("orders")
       .select(`
         *,
+        restaurant_tables (table_number),
         order_items (
           *,
           menu_items (name, preparation_time)
@@ -58,10 +64,15 @@ const Kitchen = () => {
       .in("status", ["pending", "preparing"])
       .order("created_at", { ascending: true });
 
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      setOrders(data.map((o: any) => ({
+        ...o,
+        table_info: o.restaurant_tables,
+      })) as Order[]);
+    }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     const { error } = await supabase
       .from("orders")
       .update({ status })
@@ -77,12 +88,9 @@ const Kitchen = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending":
-        return "bg-orange-500";
-      case "preparing":
-        return "bg-blue-500";
-      default:
-        return "bg-gray-500";
+      case "pending": return "bg-orange-500";
+      case "preparing": return "bg-blue-500";
+      default: return "bg-gray-500";
     }
   };
 
@@ -114,7 +122,9 @@ const Kitchen = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-2xl">Table {order.table_number}</CardTitle>
+                      <CardTitle className="text-2xl">
+                        {order.table_info ? `Table ${order.table_info.table_number}` : `#${order.order_number}`}
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                         <Clock className="w-3 h-3" />
                         {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
@@ -140,7 +150,7 @@ const Kitchen = () => {
                           )}
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {item.menu_items.preparation_time}m
+                          {item.menu_items.preparation_time || 0}m
                         </Badge>
                       </div>
                     ))}
