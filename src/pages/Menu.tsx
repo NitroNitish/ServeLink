@@ -90,9 +90,11 @@ const Menu = () => {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
-          table_number: tableNumber,
-          status: "pending",
+          order_number: `ORD-${Date.now()}`,
+          restaurant_id: "00000000-0000-0000-0000-000000000000",
+          status: "pending" as const,
           total_amount: cartTotal,
+          customer_notes: specialInstructions || null,
         })
         .select()
         .single();

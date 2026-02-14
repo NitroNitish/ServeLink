@@ -2,16 +2,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 
 interface Order {
   id: string;
-  table_number: string;
+  order_number: string;
+  table_id: string | null;
   status: string;
   total_amount: number;
   created_at: string;
+  table_info?: { table_number: string } | null;
   order_items: Array<{
     quantity: number;
     unit_price: number;
@@ -44,6 +45,7 @@ export const OrdersManagement = () => {
       .from("orders")
       .select(`
         *,
+        restaurant_tables (table_number),
         order_items (
           quantity,
           unit_price,
@@ -53,7 +55,12 @@ export const OrdersManagement = () => {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    if (data) setOrders(data as Order[]);
+    if (data) {
+      setOrders(data.map((o: any) => ({
+        ...o,
+        table_info: o.restaurant_tables,
+      })) as Order[]);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -70,6 +77,40 @@ export const OrdersManagement = () => {
   const filterOrders = (statuses: string[]) =>
     orders.filter((o) => statuses.includes(o.status));
 
+  const renderOrder = (order: Order) => (
+    <Card key={order.id} className="shadow-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">
+            {order.table_info ? `Table ${order.table_info.table_number}` : `Order #${order.order_number}`}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(order.status)}>
+              {order.status}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {order.order_items.map((item, idx) => (
+            <div key={idx} className="flex justify-between text-sm">
+              <span>{item.quantity}x {item.menu_items.name}</span>
+              <span>₹{(item.quantity * item.unit_price).toFixed(2)}</span>
+            </div>
+          ))}
+          <div className="border-t pt-2 flex justify-between font-bold">
+            <span>Total</span>
+            <span className="text-primary">₹{order.total_amount.toFixed(2)}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Tabs defaultValue="active" className="space-y-6">
       <TabsList>
@@ -79,123 +120,15 @@ export const OrdersManagement = () => {
       </TabsList>
 
       <TabsContent value="active" className="space-y-4">
-        {filterOrders(["pending", "preparing", "ready"]).map((order) => (
-          <Card key={order.id} className="shadow-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  Table {order.table_number}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(order.created_at), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {order.order_items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>
-                      {item.quantity}x {item.menu_items.name}
-                    </span>
-                    <span>₹{(item.quantity * item.unit_price).toFixed(2)}</span>
-                  </div>
-                ))}
-                <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">₹{order.total_amount.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {filterOrders(["pending", "preparing", "ready"]).map(renderOrder)}
       </TabsContent>
 
       <TabsContent value="completed" className="space-y-4">
-        {filterOrders(["completed"]).map((order) => (
-          <Card key={order.id} className="shadow-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  Table {order.table_number}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(order.created_at), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {order.order_items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>
-                      {item.quantity}x {item.menu_items.name}
-                    </span>
-                    <span>₹{(item.quantity * item.unit_price).toFixed(2)}</span>
-                  </div>
-                ))}
-                <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">₹{order.total_amount.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {filterOrders(["completed"]).map(renderOrder)}
       </TabsContent>
 
       <TabsContent value="all" className="space-y-4">
-        {orders.map((order) => (
-          <Card key={order.id} className="shadow-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  Table {order.table_number}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(order.created_at), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {order.order_items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>
-                      {item.quantity}x {item.menu_items.name}
-                    </span>
-                    <span>₹{(item.quantity * item.unit_price).toFixed(2)}</span>
-                  </div>
-                ))}
-                <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">₹{order.total_amount.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {orders.map(renderOrder)}
       </TabsContent>
     </Tabs>
   );
