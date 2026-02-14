@@ -8,17 +8,12 @@ import { QrCode, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 
-interface Table {
-  id: string;
-  table_number: string;
-  capacity: number | null;
-  qr_code: string | null;
-  is_active: boolean | null;
-  restaurant_id: string;
+interface TableManagementProps {
+  restaurantId: string;
 }
 
-export const TableManagement = () => {
-  const [tables, setTables] = useState<Table[]>([]);
+export const TableManagement = ({ restaurantId }: TableManagementProps) => {
+  const [tables, setTables] = useState<any[]>([]);
   const [newTableNumber, setNewTableNumber] = useState("");
   const [newCapacity, setNewCapacity] = useState("4");
   const { toast } = useToast();
@@ -31,6 +26,7 @@ export const TableManagement = () => {
     const { data } = await supabase
       .from("restaurant_tables")
       .select("*")
+      .eq("restaurant_id", restaurantId)
       .order("table_number");
     if (data) setTables(data);
   };
@@ -38,15 +34,14 @@ export const TableManagement = () => {
   const addTable = async () => {
     if (!newTableNumber) return;
 
-    const user = (await supabase.auth.getUser()).data.user;
-    const qrData = `${window.location.origin}/menu/${user?.id}?table=${newTableNumber}`;
+    const qrData = `${window.location.origin}/menu/${restaurantId}?table=${newTableNumber}`;
     const qrCode = await QRCode.toDataURL(qrData);
 
     const { error } = await supabase.from("restaurant_tables").insert({
       table_number: newTableNumber,
       capacity: parseInt(newCapacity),
       qr_code: qrCode,
-      restaurant_id: user?.id || "",
+      restaurant_id: restaurantId,
     });
 
     if (error) {
@@ -84,21 +79,10 @@ export const TableManagement = () => {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
-            <Input
-              placeholder="Table Number (e.g., T1)"
-              value={newTableNumber}
-              onChange={(e) => setNewTableNumber(e.target.value)}
-            />
-            <Input
-              type="number"
-              placeholder="Capacity"
-              value={newCapacity}
-              onChange={(e) => setNewCapacity(e.target.value)}
-              className="w-32"
-            />
+            <Input placeholder="Table Number (e.g., T1)" value={newTableNumber} onChange={(e) => setNewTableNumber(e.target.value)} />
+            <Input type="number" placeholder="Capacity" value={newCapacity} onChange={(e) => setNewCapacity(e.target.value)} className="w-32" />
             <Button onClick={addTable}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Table
+              <Plus className="w-4 h-4 mr-2" /> Add Table
             </Button>
           </div>
         </CardContent>
@@ -121,20 +105,11 @@ export const TableManagement = () => {
               )}
               <div className="flex gap-2">
                 {table.qr_code && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => downloadQR(table.qr_code!, table.table_number)}
-                  >
-                    <QrCode className="w-4 h-4 mr-2" />
-                    Download QR
+                  <Button variant="outline" className="flex-1" onClick={() => downloadQR(table.qr_code!, table.table_number)}>
+                    <QrCode className="w-4 h-4 mr-2" /> Download QR
                   </Button>
                 )}
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => deleteTable(table.id)}
-                >
+                <Button variant="destructive" size="icon" onClick={() => deleteTable(table.id)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>

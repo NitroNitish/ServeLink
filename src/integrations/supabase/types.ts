@@ -22,7 +22,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
-          restaurant_id: string
+          restaurant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -31,7 +31,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
-          restaurant_id: string
+          restaurant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -40,7 +40,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
-          restaurant_id?: string
+          restaurant_id?: string | null
         }
         Relationships: [
           {
@@ -64,8 +64,7 @@ export type Database = {
           name: string
           preparation_time: number | null
           price: number
-          restaurant_id: string
-          tags: string[] | null
+          restaurant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -78,9 +77,8 @@ export type Database = {
           is_veg?: boolean | null
           name: string
           preparation_time?: number | null
-          price: number
-          restaurant_id: string
-          tags?: string[] | null
+          price?: number
+          restaurant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -94,8 +92,7 @@ export type Database = {
           name?: string
           preparation_time?: number | null
           price?: number
-          restaurant_id?: string
-          tags?: string[] | null
+          restaurant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -119,8 +116,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          menu_item_id: string
-          order_id: string
+          menu_item_id: string | null
+          order_id: string | null
           quantity: number
           special_instructions: string | null
           unit_price: number
@@ -128,17 +125,17 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          menu_item_id: string
-          order_id: string
+          menu_item_id?: string | null
+          order_id?: string | null
           quantity?: number
           special_instructions?: string | null
-          unit_price: number
+          unit_price?: number
         }
         Update: {
           created_at?: string
           id?: string
-          menu_item_id?: string
-          order_id?: string
+          menu_item_id?: string | null
+          order_id?: string | null
           quantity?: number
           special_instructions?: string | null
           unit_price?: number
@@ -163,47 +160,35 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
-          customer_id: string | null
           customer_notes: string | null
-          discount_amount: number | null
           id: string
           order_number: string
-          payment_status: Database["public"]["Enums"]["payment_status"] | null
-          restaurant_id: string
-          status: Database["public"]["Enums"]["order_status"] | null
+          restaurant_id: string | null
+          status: string
           table_id: string | null
-          tax_amount: number | null
-          total_amount: number
+          total_amount: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          customer_id?: string | null
           customer_notes?: string | null
-          discount_amount?: number | null
           id?: string
           order_number: string
-          payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          restaurant_id: string
-          status?: Database["public"]["Enums"]["order_status"] | null
+          restaurant_id?: string | null
+          status?: string
           table_id?: string | null
-          tax_amount?: number | null
-          total_amount?: number
+          total_amount?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          customer_id?: string | null
           customer_notes?: string | null
-          discount_amount?: number | null
           id?: string
           order_number?: string
-          payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          restaurant_id?: string
-          status?: Database["public"]["Enums"]["order_status"] | null
+          restaurant_id?: string | null
+          status?: string
           table_id?: string | null
-          tax_amount?: number | null
-          total_amount?: number
+          total_amount?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -225,28 +210,28 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
           created_at: string
           full_name: string | null
           id: string
-          phone: string | null
+          role: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          full_name?: string | null
-          id: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
-          phone?: string | null
+          role?: string | null
           updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -255,27 +240,27 @@ export type Database = {
           capacity: number | null
           created_at: string
           id: string
-          is_active: boolean | null
           qr_code: string | null
-          restaurant_id: string
+          restaurant_id: string | null
+          status: string | null
           table_number: string
         }
         Insert: {
           capacity?: number | null
           created_at?: string
           id?: string
-          is_active?: boolean | null
           qr_code?: string | null
-          restaurant_id: string
+          restaurant_id?: string | null
+          status?: string | null
           table_number: string
         }
         Update: {
           capacity?: number | null
           created_at?: string
           id?: string
-          is_active?: boolean | null
           qr_code?: string | null
-          restaurant_id?: string
+          restaurant_id?: string | null
+          status?: string | null
           table_number?: string
         }
         Relationships: [
@@ -292,65 +277,29 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
-          description: string | null
-          email: string | null
           id: string
-          is_active: boolean | null
-          logo_url: string | null
           name: string
+          owner_id: string | null
           phone: string | null
-          settings: Json | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string
-          description?: string | null
-          email?: string | null
           id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
           name: string
+          owner_id?: string | null
           phone?: string | null
-          settings?: Json | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string
-          description?: string | null
-          email?: string | null
           id?: string
-          is_active?: boolean | null
-          logo_url?: string | null
           name?: string
+          owner_id?: string | null
           phone?: string | null
-          settings?: Json | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          restaurant_id: string | null
-          role: Database["public"]["Enums"]["user_role_type"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          restaurant_id?: string | null
-          role: Database["public"]["Enums"]["user_role_type"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          restaurant_id?: string | null
-          role?: Database["public"]["Enums"]["user_role_type"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -359,25 +308,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          check_role: Database["public"]["Enums"]["user_role_type"]
-          user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      order_status:
-        | "pending"
-        | "confirmed"
-        | "preparing"
-        | "ready"
-        | "served"
-        | "completed"
-        | "cancelled"
-      payment_status: "pending" | "paid" | "failed" | "refunded"
-      user_role_type: "admin" | "staff" | "kitchen" | "customer"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -504,18 +438,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      order_status: [
-        "pending",
-        "confirmed",
-        "preparing",
-        "ready",
-        "served",
-        "completed",
-        "cancelled",
-      ],
-      payment_status: ["pending", "paid", "failed", "refunded"],
-      user_role_type: ["admin", "staff", "kitchen", "customer"],
-    },
+    Enums: {},
   },
 } as const

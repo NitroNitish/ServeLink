@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ interface Category {
 const Menu = () => {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table") || "1";
+  const { restaurantId } = useParams();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
@@ -91,8 +92,8 @@ const Menu = () => {
         .from("orders")
         .insert({
           order_number: `ORD-${Date.now()}`,
-          restaurant_id: "00000000-0000-0000-0000-000000000000",
-          status: "pending" as const,
+          restaurant_id: restaurantId || null,
+          status: "pending",
           total_amount: cartTotal,
           customer_notes: specialInstructions || null,
         })
