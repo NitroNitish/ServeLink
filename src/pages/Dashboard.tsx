@@ -1,16 +1,27 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MenuManagement } from "@/components/MenuManagement";
 import { TableManagement } from "@/components/TableManagement";
 import { OrdersManagement } from "@/components/OrdersManagement";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { StaffManagement } from "@/components/StaffManagement";
 import { AppHeader } from "@/components/AppHeader";
 import { useRestaurant } from "@/hooks/use-restaurant";
 import { useAuth } from "@/hooks/use-auth";
 
 const Dashboard = () => {
-  const { loading: authLoading } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const { restaurantId, loading: restaurantLoading } = useRestaurant();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && profile && profile.role !== "owner") {
+      if (profile.role === "kitchen") navigate("/kitchen");
+      else if (profile.role === "waiter") navigate("/waiter");
+    }
+  }, [authLoading, profile, navigate]);
 
   if (authLoading || restaurantLoading) {
     return (
@@ -43,6 +54,7 @@ const Dashboard = () => {
             <TabsTrigger value="menu">Menu</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="tables">Tables & QR</TabsTrigger>
+            <TabsTrigger value="staff">Staff</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -59,6 +71,10 @@ const Dashboard = () => {
 
           <TabsContent value="tables">
             <TableManagement restaurantId={restaurantId} />
+          </TabsContent>
+
+          <TabsContent value="staff">
+            <StaffManagement restaurantId={restaurantId} />
           </TabsContent>
         </Tabs>
       </main>

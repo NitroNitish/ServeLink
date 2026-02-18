@@ -10,18 +10,31 @@ export const useRestaurant = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      // Try to find existing restaurant
-      const { data } = await supabase
+      // First check if user is a staff member linked to a restaurant
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("restaurant_id, role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile?.restaurant_id && profile.role !== "owner") {
+        setRestaurantId(profile.restaurant_id);
+        setLoading(false);
+        return;
+      }
+
+      // Try to find existing restaurant owned by user
+      const { data: ownedRestaurant } = await supabase
         .from("restaurants")
         .select("id")
         .eq("owner_id", user.id)
         .limit(1)
         .maybeSingle();
 
-      if (data) {
-        setRestaurantId(data.id);
-      } else {
-        // Auto-create one
+      if (ownedRestaurant) {
+        setRestaurantId(ownedRestaurant.id);
+      } else if (profile?.role === "owner" || !profile) {
+        // Auto-create one for owner
         const { data: newRestaurant } = await supabase
           .from("restaurants")
           .insert({
